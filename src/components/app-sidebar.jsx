@@ -7,6 +7,7 @@ import {
   PanelLeftClose,
 } from "lucide-react";
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 import {
   Sidebar,
@@ -24,28 +25,29 @@ import {
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/",
     icon: Home,
   },
   {
     title: "Gitlab",
-    url: "#gitlab",
+    url: "/gitlab",
     icon: Gitlab,
   },
   {
     title: "Detective",
-    url: "#detective",
+    url: "/detective",
     icon: SearchCheck,
   },
   {
     title: "Notes",
-    url: "#notes",
+    url: "/notes",
     icon: ListTodo,
   },
 ];
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   return (
     <div
@@ -70,13 +72,17 @@ export function AppSidebar() {
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a
-                        href={item.url}
-                        className="flex w-full items-center gap-2 p-3"
+                      <Link
+                        to={item.url}
+                        className={`flex w-full items-center gap-2 p-3 ${
+                          location.pathname === item.url ? "bg-neutral-800" : ""
+                        }`}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
-                        <span>{item.title}</span>
-                      </a>
+                        <span className={collapsed ? "hidden" : "block"}>
+                          {item.title}
+                        </span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -90,13 +96,19 @@ export function AppSidebar() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a
-                      href="#settings"
-                      className="flex w-full items-center gap-2 p-3 mb-2"
+                    <Link
+                      to="/settings"
+                      className={`flex w-full items-center gap-2 p-3 mb-2 ${
+                        location.pathname === "/settings"
+                          ? "bg-neutral-800"
+                          : ""
+                      }`}
                     >
                       <Settings className="h-4 w-4 shrink-0" />
-                      <span>Settings</span>
-                    </a>
+                      <span className={collapsed ? "hidden" : "block"}>
+                        Settings
+                      </span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
