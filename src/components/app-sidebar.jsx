@@ -68,7 +68,7 @@ export function AppSidebar({
       {...rest}
     >
       <div className="h-full flex flex-col justify-between">
-        <SidebarContent>
+        <SidebarContent className={`overflow-x-hidden overflow-y-auto`}>
           <SidebarGroup>
             <SidebarGroupLabel
               className={`transition-opacity duration-300 ${
