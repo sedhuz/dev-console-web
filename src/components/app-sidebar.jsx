@@ -5,8 +5,8 @@ import {
   SearchCheck,
   Settings,
   PanelLeftClose,
+  PenTool,
 } from "lucide-react";
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import {
@@ -43,21 +43,31 @@ const items = [
     url: "/notes",
     icon: ListTodo,
   },
+  {
+    title: "Diagrams",
+    url: "/diagrams",
+    icon: PenTool,
+  },
 ];
 
-export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export function AppSidebar({
+  isCollapsed: collapsed,
+  onToggle,
+  className,
+  ...rest
+}) {
   const location = useLocation();
+
+  const dataCollapsed = collapsed ? "true" : "false";
 
   return (
     <div
+      data-collapsed={dataCollapsed}
       className={`transition-all duration-300 ease-in-out border-r border-border
-      ${collapsed ? "w-14" : "w-48"}`}
+      ${collapsed ? "w-14" : "w-48"} ${className || ""}`}
+      {...rest}
     >
-      <div
-        className="h-full flex flex-col justify-between"
-        collapsed={collapsed}
-      >
+      <div className="h-full flex flex-col justify-between">
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel
@@ -75,7 +85,9 @@ export function AppSidebar() {
                       <Link
                         to={item.url}
                         className={`flex w-full items-center gap-2 p-3 ${
-                          location.pathname === item.url ? "bg-neutral-800" : ""
+                          location.pathname === item.url
+                            ? "bg-backround-800"
+                            : ""
                         }`}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
@@ -100,7 +112,7 @@ export function AppSidebar() {
                       to="/settings"
                       className={`flex w-full items-center gap-2 p-3 mb-2 ${
                         location.pathname === "/settings"
-                          ? "bg-neutral-800"
+                          ? "bg-background-800"
                           : ""
                       }`}
                     >
@@ -118,8 +130,8 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                onClick={() => setCollapsed(!collapsed)}
-                className="w-full p-3 bg-neutral-900 flex items-center justify-center"
+                onClick={onToggle}
+                className="w-full p-3 flex items-center justify-center"
               >
                 <button>
                   <PanelLeftClose

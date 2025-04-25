@@ -147,12 +147,21 @@ export default function GitlabPage() {
   };
 
   return (
-    <div className="pl-4 pt-4 flex flex-col h-screen">
-      <div className="sticky top-0 z-10">
-        <h1 className="p-2 text-4xl font-bold">Gitlab Dashboard</h1>
+    <div className="flex flex-col flex-1 w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Gitlab Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your merge requests and track development progress
+          </p>
+        </div>
       </div>
 
-      <div className="flex-1 p-2 pr-6 overflow-auto">
+      {/* Rest of your GitLab page content */}
+      <div className="flex-1 p-6">
         <div className="space-y-8 max-w-[1800px] mx-auto">
           <div className="w-full overflow-x-auto">
             <div className="min-w-[1024px] w-full">

@@ -1,21 +1,25 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeProviderContext = createContext({
-  theme: "system",
-  setTheme: () => {},
-});
+const ThemeContext = createContext({});
 
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "vite-ui-theme",
-}) {
+export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem(storageKey) || defaultTheme;
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("theme") || "system";
+    }
+    return "system";
+  });
+
+  const [accent, setAccent] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("accent") || "zinc";
+    }
+    return "zinc";
   });
 
   useEffect(() => {
-    const root = document.documentElement;
+    const root = window.document.documentElement;
+
     root.classList.remove("light", "dark");
 
     if (theme === "system") {
@@ -27,25 +31,44 @@ export function ThemeProvider({
     } else {
       root.classList.add(theme);
     }
+
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const value = {
-    theme,
-    setTheme: (newTheme) => {
-      localStorage.setItem(storageKey, newTheme);
-      setTheme(newTheme);
-    },
-  };
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const colors = [
+      "zinc",
+      "slate",
+      "stone",
+      "gray",
+      "red",
+      "rose",
+      "orange",
+      "green",
+      "blue",
+      "yellow",
+      "violet",
+      "purple",
+    ];
+
+    colors.forEach((color) => {
+      root.classList.remove(`accent-${color}`);
+    });
+    root.classList.add(`accent-${accent}`);
+    localStorage.setItem("accent", accent);
+  }, [accent]);
 
   return (
-    <ThemeProviderContext.Provider value={value}>
+    <ThemeContext.Provider value={{ theme, setTheme, accent, setAccent }}>
       {children}
-    </ThemeProviderContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
 export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-  if (!context) throw new Error("useTheme must be used within a ThemeProvider");
+  const context = useContext(ThemeContext);
+  if (context === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider");
   return context;
 };
