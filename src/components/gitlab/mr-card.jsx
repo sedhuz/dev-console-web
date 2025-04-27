@@ -1,185 +1,124 @@
-import {
-  MessageSquarePlus,
-  MessageSquare,
-  ExternalLink,
-  Copy,
-  Check,
-  GitBranch,
-  Calendar,
-  GripVertical,
-  User,
-} from "lucide-react";
+import { Copy, MessageCircle, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, memo } from "react";
-import { toast, Toaster } from "sonner";
-import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-const TagColors = {
-  backend: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+const tagColors = {
   frontend:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
-  bug: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+    "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800",
+  backend:
+    "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800",
+  bug: "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800",
+  enhancement:
+    "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800",
   security:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-  "high-priority":
-    "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
-  mobile:
-    "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
+    "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200 dark:hover:bg-amber-800",
+  ui: "bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800",
 };
 
-const MRCardHeader = memo(({ mr, onAddNote, dragHandleProps }) => (
-  <div className="flex items-start justify-between gap-2 p-0">
-    <div className="flex-1 border-b pb-2 min-w-0">
-      <div className="flex items-start gap-2">
-        {mr.mrLink ? (
-          <a
-            href={mr.mrLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-m truncate hover:text-primary transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {mr.title}
-          </a>
-        ) : (
-          <h3 className="font-medium text-m truncate">{mr.title}</h3>
-        )}
-      </div>
-      <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-        {mr.updatedAt && (
-          <>
-            <Calendar className="h-3 w-3" />
-            <span>Updated {mr.updatedAt}</span>
-          </>
-        )}
-      </div>
-    </div>
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAddNote(mr.id);
-        }}
-      >
-        {mr.hasNotes ? (
-          <MessageSquare className="h-4 w-4" />
-        ) : (
-          <MessageSquarePlus className="h-4 w-4" />
-        )}
-      </Button>
-      <div
-        {...dragHandleProps}
-        className="h-8 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-accent/50 rounded-md transition-colors"
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
-      </div>
-    </div>
-  </div>
-));
+const statusColors = {
+  pending:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  "in-progress":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  merged: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+};
 
-const BranchInfo = memo(({ sourceBranch, targetBranch, onCopy, copied }) => (
-  <div className="flex items-center gap-2 text-xs">
-    <GitBranch className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-    <button
-      onClick={onCopy}
-      className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-    >
-      <span className="truncate max-w-[150px]">{sourceBranch}</span>
-      {copied ? (
-        <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
-      ) : (
-        <Copy className="h-3 w-3 flex-shrink-0" />
-      )}
-    </button>
-    <span className="text-muted-foreground">→</span>
-    <span className="px-2 py-1 rounded-md bg-muted truncate max-w-[100px]">
-      {targetBranch}
-    </span>
-  </div>
-));
+const statusLabels = {
+  pending: "Pending",
+  "in-progress": "In Progress",
+  merged: "Merged",
+};
 
-const Tags = memo(({ tags }) => (
-  <div className="flex flex-wrap gap-1">
-    {tags?.map((tag) => (
-      <Badge
-        key={tag}
-        variant="secondary"
-        className={cn(
-          "text-xs px-2 py-0.5",
-          TagColors[tag] ||
-            "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-        )}
-      >
-        {tag}
-      </Badge>
-    ))}
-  </div>
-));
+export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
+  const handleCopyMRID = () => {
+    onCopy(mergeRequest.iid, "MR ID");
+    toast.success(`Copied MR ID: ${mergeRequest.iid}`);
+  };
 
-export const MRCard = memo(({ mr, onAddNote, dragHandleProps }) => {
-  const [copied, setCopied] = useState(false);
+  const handleCopyBranchName = () => {
+    onCopy(mergeRequest.branch, "Branch name");
+    toast.success(`Copied branch name: ${mergeRequest.branch}`);
+  };
 
-  const handleCopyBranch = async (e) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(mr.sourceBranch);
-      setCopied(true);
-      toast.success("Branch name copied!", {
-        className: "bg-zinc-900 border-l-4 border-green-500 text-white",
-        duration: 2000,
-      });
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error("Failed to copy branch name", {
-        className: "bg-zinc-900 border-l-4 border-red-500 text-white",
-        duration: 2000,
-      });
-    }
+  const handleCopyURL = () => {
+    onCopy(mergeRequest.url, "MR URL");
+    toast.success(`Copied MR URL: ${mergeRequest.url}`);
   };
 
   return (
-    <div className="group bg-background border rounded-lg">
-      <div className="p-4 space-y-3">
-        <MRCardHeader
-          mr={mr}
-          onAddNote={onAddNote}
-          dragHandleProps={dragHandleProps}
-        />
-
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2">
-            {mr.sourceBranch && (
-              <BranchInfo
-                sourceBranch={mr.sourceBranch}
-                targetBranch={mr.targetBranch}
-                onCopy={handleCopyBranch}
-                copied={copied}
-              />
-            )}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <User className="h-3 w-3" />
-              <span className="font-medium text-foreground">{mr.author}</span>
-            </div>
-          </div>
-
-          {mr.tags && <Tags tags={mr.tags} />}
-        </div>
+    <div className="bg-background rounded-md p-4 border shadow hover:shadow-md transition select-none">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium text-foreground">{mergeRequest.title}</h3>
+        <Badge className={statusColors[mergeRequest.status]}>
+          {statusLabels[mergeRequest.status]}
+        </Badge>
       </div>
 
-      {mr.hasNotes && mr.notes && (
-        <div className="pt-0 px-4 pb-4">
-          <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded-md border">
-            {mr.notes}
-          </div>
+      <div className="flex items-center gap-1 mb-2">
+        <Badge variant="outline" className="text-xs">
+          {mergeRequest.iid}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 text-muted-foreground/75 bg-background hover:bg-background hover:cursor-pointer"
+          onClick={handleCopyMRID}
+        >
+          <Copy size={12} />
+        </Button>
+      </div>
+
+      <div className="flex items-center text-xs text-muted-foreground mb-3">
+        <GitBranch size={14} className="mr-1" />
+        <span className="truncate mr-1">{mergeRequest.branch}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 text-muted-foreground/75 bg-background hover:bg-background hover:cursor-pointer"
+          onClick={handleCopyBranchName}
+        >
+          <Copy size={12} />
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap gap-1 mb-3">
+        {mergeRequest.tags.map((tag) => (
+          <Badge
+            key={tag}
+            className={
+              tagColors[tag] ||
+              "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+            }
+          >
+            {tag}
+          </Badge>
+        ))}
+      </div>
+
+      {mergeRequest.hasNotes && (
+        <div className="text-xs bg-gray-50 p-2 rounded border mb-3 dark:bg-gray-800 dark:text-gray-200">
+          <p className="text-gray-700 dark:text-gray-300">
+            {mergeRequest.notes}
+          </p>
         </div>
       )}
+
+      <div className="flex justify-between items-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAddNote}
+          className="gap-1"
+        >
+          <MessageCircle size={14} />
+          {mergeRequest.hasNotes ? "Edit Note" : "Add Note"}
+        </Button>
+
+        <Button variant="ghost" size="sm" onClick={handleCopyURL}>
+          Copy URL
+        </Button>
+      </div>
     </div>
   );
-});
-
-MRCard.displayName = "MRCard";
+}
