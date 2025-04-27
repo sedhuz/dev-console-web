@@ -63,7 +63,7 @@ export function MRBoard({ columns, onDragEnd, onAddNote }) {
                     {column.items.map((mr, index) => (
                       <Draggable
                         key={mr.id}
-                        draggableId={mr.id.toString()}
+                        draggableId={mr.iid.toString()}
                         index={index}
                       >
                         {(provided, snapshot) => (
@@ -76,11 +76,9 @@ export function MRBoard({ columns, onDragEnd, onAddNote }) {
                                 : ""
                             }`}
                           >
-                            <MRCard
-                              mr={mr}
-                              onAddNote={onAddNote}
-                              dragHandleProps={provided.dragHandleProps}
-                            />
+                            <div {...provided.dragHandleProps}>
+                              <MRCard mr={mr} onAddNote={onAddNote} />
+                            </div>
                           </div>
                         )}
                       </Draggable>

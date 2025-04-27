@@ -74,6 +74,7 @@ const MRCardHeader = memo(({ mr, onAddNote, dragHandleProps }) => (
       <div
         {...dragHandleProps}
         className="h-8 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-accent/50 rounded-md transition-colors"
+        onMouseDown={(e) => e.preventDefault()}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>

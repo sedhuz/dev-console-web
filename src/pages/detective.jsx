@@ -1,15 +1,13 @@
+import { PageHeader } from "@/components/page-header";
+
 export default function DetectivePage() {
   return (
     <div className="flex flex-col flex-1 w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Detective</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your detective investigations
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Detective"
+        description="Manage your detective investigations"
+      />
+
       <div className="flex-1 flex flex-col items-center justify-center">
         <img
           src="not-found.svg"

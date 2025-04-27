@@ -1,15 +1,9 @@
+import { PageHeader } from "@/components/page-header";
+
 export default function DiagramsPage() {
   return (
     <div className="flex flex-col flex-1 w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Diagrams</h1>
-          <p className="text-sm text-muted-foreground">
-            Save diagrams and flowcharts
-          </p>
-        </div>
-      </div>
+      <PageHeader title="Diagrams" description="Save diagrams and flowcharts" />
       {/* Excalidraw embed, takes up the rest of the page */}
       <div className="flex-1">
         <iframe

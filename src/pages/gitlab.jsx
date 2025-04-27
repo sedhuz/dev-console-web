@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/page-header";
 
 // Initial data structure
 const initialColumns = {
@@ -17,6 +18,7 @@ const initialColumns = {
     items: [
       {
         id: 1,
+        iid: 1,
         title: "Update user authentication",
         author: "John Doe",
         hasNotes: false,
@@ -29,6 +31,7 @@ const initialColumns = {
       },
       {
         id: 2,
+        iid: 2,
         title: "Fix navigation bug",
         author: "Jane Smith",
         hasNotes: true,
@@ -42,6 +45,7 @@ const initialColumns = {
       },
       {
         id: 5,
+        iid: 5,
         title: "Add error handling",
         author: "Jane Smith",
         hasNotes: true,
@@ -54,6 +58,7 @@ const initialColumns = {
     items: [
       {
         id: 3,
+        iid: 3,
         title: "Add dark mode support",
         author: "Mike Johnson",
         hasNotes: false,
@@ -65,6 +70,7 @@ const initialColumns = {
     items: [
       {
         id: 4,
+        iid: 4,
         title: "Implement search feature",
         author: "Sarah Wilson",
         hasNotes: true,
@@ -148,19 +154,11 @@ export default function GitlabPage() {
 
   return (
     <div className="flex flex-col flex-1 w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Gitlab Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your merge requests and track development progress
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Gitlab Dashboard"
+        description="Manage your merge requests and track development progress"
+      />
 
-      {/* Rest of your GitLab page content */}
       <div className="flex-1 p-6">
         <div className="space-y-8 max-w-[1800px] mx-auto">
           <div className="w-full overflow-x-auto">

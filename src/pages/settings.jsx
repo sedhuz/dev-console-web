@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
-import { Moon, Sun, Monitor, Eye, EyeOff, Pencil, X } from "lucide-react";
+import { Moon, Sun, Monitor, Eye, EyeOff, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config";
-
+import { PageHeader } from "@/components/page-header";
 export default function SettingsPage() {
+  // —— States & Functions ————————————————————————————————————————————————————
   const { theme, setTheme } = useTheme();
   const [showToken, setShowToken] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -16,22 +17,25 @@ export default function SettingsPage() {
     url: "",
     token: "",
     project_id: "",
-  });
-  const [tempConfig, setTempConfig] = useState(gitlabConfig);
+  }); // Actual config got from api
+  const [tempConfig, setTempConfig] = useState(gitlabConfig); // User Editing
 
-  // Fetch initial config
+  // —— Fetch initial config ——————————————————————————————————
   useEffect(() => {
     let mounted = true;
 
     const fetchConfig = async () => {
       try {
-        console.group("Fetching GitLab Preferences");
+        // —— Fetch : Logs ————————————————————————————————————
+        console.group("Fetch Gitlab Preferences [Request] ...");
         console.log("Request URL:", `${API_CONFIG.baseUrl}/preferences/gitlab`);
         console.log("Request Method:", "GET");
         console.log("Request Headers:", {
           Accept: "application/json",
         });
+        console.groupEnd();
 
+        // —— Fetch : Sending Request —————————————————————————
         const response = await fetch(
           `${API_CONFIG.baseUrl}/preferences/gitlab`,
           {
@@ -44,9 +48,12 @@ export default function SettingsPage() {
 
         if (!mounted) return;
 
+        // —— Fetch : Response Logs ——————————————————————————————
+        console.group("Fetch Gitlab Preferences [Response] ...");
         console.log("Response Status:", response.status);
         console.log("Response Status Text:", response.statusText);
 
+        // —— Set Response to config —————————————————————————————
         if (response.ok) {
           const responseData = await response.json();
           console.log("Response Data:", responseData);
@@ -64,7 +71,6 @@ export default function SettingsPage() {
         } else {
           console.error("Request Failed:", response.statusText);
         }
-        console.groupEnd();
       } catch (error) {
         if (mounted) {
           console.group("Fetch Error");
@@ -73,6 +79,8 @@ export default function SettingsPage() {
           console.error("Stack Trace:", error.stack);
           console.groupEnd();
         }
+      } finally {
+        console.groupEnd();
       }
     };
 
@@ -84,35 +92,36 @@ export default function SettingsPage() {
   }, []);
 
   const handleGitlabConfigSave = async () => {
-    // Validation logs
+    // —— Validation : Logs ———————————————————————————————————
     console.group("GitLab Config Validation");
     console.log("URL:", tempConfig.url);
     console.log("Token:", tempConfig.token ? "Present" : "Missing");
     console.log("Project ID:", tempConfig.project_id);
     console.groupEnd();
 
-    // Validate inputs
+    // —— Validate Inputs —————————————————————————————————————
     if (!tempConfig.url || !tempConfig.url.startsWith("http")) {
       console.warn("Validation Failed: Invalid URL");
-      toast.error(
+      toast.warning(
         "Please enter a valid GitLab URL starting with http:// or https://"
       );
       return;
     }
     if (!tempConfig.token) {
       console.warn("Validation Failed: Missing token");
-      toast.error("Access token is required");
+      toast.warning("Access token is required");
       return;
     }
     if (!tempConfig.project_id) {
       console.warn("Validation Failed: Missing project ID");
-      toast.error("Project ID is required");
+      toast.warning("Project ID is required");
       return;
     }
 
     setIsLoading(true);
     try {
-      console.group("Saving GitLab Preferences");
+      // —— Saving : Logs —————————————————————————————————————
+      console.group("Saving GitLab Preferences [Request] ...");
       const requestBody = {
         url: tempConfig.url,
         token: tempConfig.token,
@@ -125,6 +134,7 @@ export default function SettingsPage() {
         "Content-Type": "application/json",
       });
       console.log("Request Body:", requestBody);
+      console.groupEnd();
 
       const response = await fetch(`${API_CONFIG.baseUrl}/preferences/gitlab`, {
         method: "PUT",
@@ -135,6 +145,7 @@ export default function SettingsPage() {
         body: JSON.stringify(requestBody),
       });
 
+      console.group("Saving Gitlab Preferences [Response] ...");
       console.log("Response Status:", response.status);
       console.log("Response Status Text:", response.statusText);
 
@@ -156,7 +167,6 @@ export default function SettingsPage() {
       } else {
         throw new Error(data.message || "Failed to save settings");
       }
-      console.groupEnd();
     } catch (error) {
       console.group("Save Error");
       console.error("Error Type:", error.name);
@@ -166,6 +176,7 @@ export default function SettingsPage() {
 
       toast.error(`Failed to save settings: ${error.message}`);
     } finally {
+      console.groupEnd();
       setIsLoading(false);
     }
   };
@@ -175,19 +186,14 @@ export default function SettingsPage() {
     setIsEditing(false);
   };
 
+  // —— Render ————————————————————————————————————————————————————————————————
   return (
     <div className="flex flex-col flex-1 w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your application preferences
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your application preferences"
+      />
 
-      {/* Content */}
       <div className="flex-1 p-6 space-y-6">
         <div className="rounded-lg border bg-card">
           <div className="border-b bg-muted/50 px-6 py-4">
