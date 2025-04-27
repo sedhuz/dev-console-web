@@ -8,6 +8,9 @@ import {
   PenTool,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "sonner";
+import { useEffect } from "react";
+import { API_CONFIG } from "@/config";
 
 import {
   Sidebar,
@@ -59,6 +62,25 @@ export function AppSidebar({
   const location = useLocation();
 
   const dataCollapsed = collapsed ? "true" : "false";
+
+  // Check backend connection whenever the location changes
+  useEffect(() => {
+    checkBackendConnection();
+  }, [location]); // Add location as a dependency
+
+  const checkBackendConnection = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.baseUrl}/`, {
+        method: "GET",
+      });
+      if (!response.ok) {
+        throw new Error("Backend is down");
+      }
+    } catch (error) {
+      console.error("Error checking backend connection:", error); // Log the error for debugging
+      toast.error("Connection error: Backend is down."); // Show the toast
+    }
+  };
 
   return (
     <div
