@@ -1,78 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/page-header";
 import { MergeRequestBoard } from "@/components/gitlab/mr-board";
-
-const initialColumns = {
-  pending: {
-    title: "Pending Review",
-    items: [
-      {
-        id: "1",
-        iid: "MR-421",
-        title: "Update user authentication",
-        author: "John Doe",
-        hasNotes: false,
-        notes: "",
-        branch: "feature/auth-update",
-        url: "https://gitlab.com/project/merge_requests/421",
-        tags: ["frontend", "security"],
-        status: "pending",
-      },
-      {
-        id: "2",
-        iid: "MR-422",
-        title: "Fix navigation bug",
-        author: "Jane Smith",
-        hasNotes: true,
-        notes: "Need to test on mobile",
-        branch: "bugfix/nav-issues",
-        url: "https://gitlab.com/project/merge_requests/422",
-        tags: ["bug", "ui"],
-        status: "pending",
-      },
-    ],
-  },
-  inProgress: {
-    title: "In Progress",
-    items: [
-      {
-        id: "3",
-        iid: "MR-420",
-        title: "Add dark mode support",
-        author: "Mike Johnson",
-        hasNotes: false,
-        notes: "",
-        branch: "feature/dark-mode",
-        url: "https://gitlab.com/project/merge_requests/420",
-        tags: ["frontend", "enhancement"],
-        status: "in-progress",
-      },
-    ],
-  },
-  completed: {
-    title: "Completed",
-    items: [
-      {
-        id: "4",
-        iid: "MR-419",
-        title: "Implement search feature",
-        author: "Sarah Wilson",
-        hasNotes: true,
-        notes: "Deployed to staging",
-        branch: "feature/search",
-        url: "https://gitlab.com/project/merge_requests/419",
-        tags: ["frontend", "backend"],
-        status: "merged",
-      },
-    ],
-  },
-};
+import { API_CONFIG } from "@/config"; // Ensure you have the API_CONFIG imported
+import { toast } from "sonner";
 
 export default function GitlabPage() {
-  const [columns, setColumns] = useState(initialColumns);
+  const [columns, setColumns] = useState({
+    pending: { title: "Pending Review", items: [] },
+    inProgress: { title: "In Progress", items: [] },
+    completed: { title: "Completed", items: [] },
+  });
 
   const handleColumnUpdate = (updatedColumns) => {
     setColumns(updatedColumns);
+  };
+
+  useEffect(() => {
+    const fetchMergeRequests = async () => {
+      try {
+        const response = await fetch(
+          `${API_CONFIG.baseUrl}/gitlab/merge-requests`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Parsed data:", data);
+
+        const mergeRequests = data.data || [];
+        const categorizedColumns = categorizeMergeRequests(mergeRequests);
+        setColumns(categorizedColumns);
+      } catch (error) {
+        toast.error("Error fetching merge requests");
+        console.error("Error fetching merge requests:", error);
+      }
+    };
+
+    fetchMergeRequests();
+  }, []);
+
+  const categorizeMergeRequests = (mergeRequests) => {
+    const categorized = {
+      pending: { title: "Pending Review", items: [] },
+      inProgress: { title: "In Progress", items: [] },
+      completed: { title: "Completed", items: [] },
+    };
+
+    mergeRequests.forEach((mr) => {
+      const group = mr.custom_fields.group || "default"; // Use default if no group
+      console.log("Merge Request Group:", group); // Log the group value
+
+      // Check if the group exists in categorized
+      if (!categorized[group]) {
+        console.warn(`Unexpected group: ${group}. Using 'pending' instead.`);
+        categorized.pending = categorized.pending || {
+          title: "Pending Review",
+          items: [],
+        };
+        categorized.pending.items.push(mr);
+      } else {
+        categorized[group].items.push(mr);
+      }
+    });
+
+    return categorized;
   };
 
   return (

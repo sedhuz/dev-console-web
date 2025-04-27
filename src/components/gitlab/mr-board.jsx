@@ -6,7 +6,11 @@ import { GripVertical } from "lucide-react";
 
 export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
   const [dragging, setDragging] = useState(null);
-  const [noteDialog, setNoteDialog] = useState({ open: false, mrId: null });
+  const [noteDialog, setNoteDialog] = useState({
+    open: false,
+    projectId: null,
+    mrIid: null,
+  });
   const [noteText, setNoteText] = useState("");
   const [dropTarget, setDropTarget] = useState({ columnId: null, index: null });
   const dragItemRef = useRef(null);
@@ -143,17 +147,21 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
     dragItemRef.current = null;
   };
 
-  const handleAddNote = (mrId) => {
+  const handleAddNote = (projectId, mrIid) => {
     let existingNote = "";
     Object.values(columns).forEach((column) => {
       column.items.forEach((item) => {
-        if (item.id === mrId && item.hasNotes) {
-          existingNote = item.notes;
+        if (
+          item.iid === mrIid &&
+          item.project_id === projectId &&
+          item.custom_fields.notes
+        ) {
+          existingNote = item.custom_fields.notes;
         }
       });
     });
     setNoteText(existingNote);
-    setNoteDialog({ open: true, mrId });
+    setNoteDialog({ open: true, projectId, mrIid });
   };
 
   const handleSaveNote = () => {
@@ -168,12 +176,12 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
     });
 
     onColumnUpdate(updatedColumns);
-    setNoteDialog({ open: false, mrId: null });
+    setNoteDialog({ open: false, projectId: null, mrIid: null });
     setNoteText("");
   };
 
   const closeDialog = () => {
-    setNoteDialog({ open: false, mrId: null });
+    setNoteDialog({ open: false, projectId: null, mrIid: null });
     setNoteText("");
   };
 
@@ -197,7 +205,7 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
                   : "border-muted"
               }`}
             onDragOver={(e) => handleColumnDragOver(e, columnId)}
-            onDrop={() => handleDrop(columnId, column.items.length)}
+            onDrop={() => handleDrop(columnId, dropTarget.index)}
           >
             <h2 className="font-semibold text-lg mb-4 text-foreground">
               {column.title}
@@ -239,7 +247,12 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
                       </div>
                       <MergeRequestCard
                         mergeRequest={mergeRequest}
-                        onAddNote={() => handleAddNote(mergeRequest.id)}
+                        onAddNote={() =>
+                          handleAddNote(
+                            mergeRequest.project_id,
+                            mergeRequest.iid
+                          )
+                        }
                         onCopy={copyToClipboard}
                       />
                     </div>
@@ -277,6 +290,8 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
         onSave={handleSaveNote}
         noteText={noteText}
         onNoteChange={(e) => setNoteText(e.target.value)}
+        projectId={noteDialog.projectId}
+        mrIid={noteDialog.mrIid}
       />
     </>
   );

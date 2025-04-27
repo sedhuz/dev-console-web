@@ -1,33 +1,49 @@
-import { Copy, MessageCircle, GitBranch } from "lucide-react";
+import { MessageCircle, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+
 const tagColors = {
-  frontend:
-    "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800",
-  backend:
-    "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800",
-  bug: "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800",
-  enhancement:
-    "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800",
-  security:
-    "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-200 dark:hover:bg-amber-800",
-  ui: "bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800",
+  "DEPENDENCY - BOOKS REPO":
+    "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200",
+  "NO PENDING REVIEW":
+    "bg-gray-700 text-white  dark:bg-gray-100 dark:text-gray-900",
+  REVIEWED:
+    "bg-violet-100 text-violet-800  dark:bg-violet-900 dark:text-violet-200",
+  "GOOD TO MERGE":
+    "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
+  "SECURITY REVIEW - NA":
+    "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
+  MASTER: "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
+  "READY TO MERGE":
+    "bg-cyan-100 text-cyan-800  dark:bg-cyan-900 dark:text-cyan-200",
+  "INVESTIGATION COMPLETED":
+    "bg-blue-100 text-blue-800  dark:bg-blue-900 dark:text-blue-200",
+  "WORK ON HOLD":
+    "bg-yellow-100 text-yellow-800  dark:bg-yellow-900 dark:text-yellow-200",
 };
 
 const statusColors = {
-  pending:
+  opened:
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
   "in-progress":
     "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   merged: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  closed: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
 };
 
 const statusLabels = {
-  pending: "Pending",
+  opened: "Opened",
   "in-progress": "In Progress",
   merged: "Merged",
+  closed: "Closed",
 };
 
 export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
@@ -42,48 +58,67 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
   };
 
   const handleCopyURL = () => {
-    onCopy(mergeRequest.url, "MR URL");
-    toast.success(`Copied MR URL: ${mergeRequest.url}`);
+    onCopy(mergeRequest.web_url, "MR URL");
+    toast.success(`Copied MR URL: ${mergeRequest.web_url}`);
+  };
+
+  const handleOpenGitLab = () => {
+    window.open(mergeRequest.web_url, "_blank");
   };
 
   return (
     <div className="bg-background rounded-md p-4 border shadow hover:shadow-md transition select-none">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-foreground">{mergeRequest.title}</h3>
-        <Badge className={statusColors[mergeRequest.status]}>
-          {statusLabels[mergeRequest.status]}
+      <div className="flex justify-between gap-2 items-start mb-2">
+        <h3 className="font-medium text-foreground">
+          {mergeRequest.title_formatted}
+        </h3>
+        <Badge className={statusColors[mergeRequest.state]}>
+          {statusLabels[mergeRequest.state]}
         </Badge>
       </div>
 
-      <div className="flex items-center gap-1 mb-2">
-        <Badge variant="outline" className="text-xs">
-          {mergeRequest.iid}
-        </Badge>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5 text-muted-foreground/75 bg-background hover:bg-background hover:cursor-pointer"
+      <div className="flex items-center gap-2 mb-2">
+        <Badge
+          variant="outline"
+          className="text-xs text-muted-foreground hover:cursor-pointer hover:text-foreground transition-colors"
           onClick={handleCopyMRID}
         >
-          <Copy size={12} />
-        </Button>
+          ! {mergeRequest.iid}
+        </Badge>
+
+        {mergeRequest.has_conflicts && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge
+                  variant="outline"
+                  className="text-xs hover:cursor-pointer"
+                >
+                  ⚠️
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  This merge request has conflicts that need to be resolved.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       <div className="flex items-center text-xs text-muted-foreground mb-3">
         <GitBranch size={14} className="mr-1" />
-        <span className="truncate mr-1">{mergeRequest.branch}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5 text-muted-foreground/75 bg-background hover:bg-background hover:cursor-pointer"
+        <span
+          className="truncate text-s mr-2 hover:cursor-pointer hover:text-foreground transition-colors"
           onClick={handleCopyBranchName}
         >
-          <Copy size={12} />
-        </Button>
+          {mergeRequest.branch}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-1 mb-3">
-        {mergeRequest.tags.map((tag) => (
+        {mergeRequest.labels.map((tag) => (
           <Badge
             key={tag}
             className={
@@ -96,11 +131,9 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
         ))}
       </div>
 
-      {mergeRequest.hasNotes && (
-        <div className="text-xs bg-gray-50 p-2 rounded border mb-3 dark:bg-gray-800 dark:text-gray-200">
-          <p className="text-gray-700 dark:text-gray-300">
-            {mergeRequest.notes}
-          </p>
+      {mergeRequest.custom_fields.notes && (
+        <div className="text-xs bg-green-900/10 p-2 px-3 rounded-md border-green-900 border mb-3">
+          <p className="text-green-300">{mergeRequest.custom_fields.notes}</p>
         </div>
       )}
 
@@ -115,9 +148,27 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
           {mergeRequest.hasNotes ? "Edit Note" : "Add Note"}
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={handleCopyURL}>
-          Copy URL
-        </Button>
+        <div className="flex items-center hover:cursor-pointer">
+          <div className="flex border border-faded rounded-md overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyURL}
+              className="rounded-l-md rounded-r-none hover:bg-gray-200"
+            >
+              🔗
+            </Button>
+            <div className="border-l border-faded" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenGitLab}
+              className="rounded-r-md rounded-l-none hover:bg-gray-200"
+            >
+              🦊
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
