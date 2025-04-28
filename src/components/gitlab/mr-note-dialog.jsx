@@ -73,7 +73,7 @@ export function MergeRequestNoteDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {noteText ? "Edit Note" : "Add Note"} for MR !{mrIid}
+            Note for MR !{mrIid}
           </DialogTitle>
         </DialogHeader>
         <Textarea

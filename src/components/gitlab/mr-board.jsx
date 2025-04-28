@@ -4,6 +4,7 @@ import { MergeRequestCard } from "./mr-card";
 import { MergeRequestNoteDialog } from "./mr-note-dialog";
 import { GripVertical } from "lucide-react";
 import { API_CONFIG } from "@/config";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
@@ -315,16 +316,16 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
   return (
     <>
       <div className="scrollbar-custom pb-2 flex overflow-x-auto gap-6">
-        <h2 className="font-semibold text-lg mb-4 text-foreground">
-          {column.title}
-        </h2>
         {Object.entries(columns).map(([columnId, column]) => (
           <div
             key={columnId}
-            className={`board-column scrollbar-custom bg-card rounded-lg border shadow-sm p-4 min-h-80 flex flex-col transition-colors duration-300 overflow-y-auto max-h-[calc(100vh-145px)] min-w-[450px]`}
+            className={`board-column scrollbar-custom bg-card rounded-lg border shadow-sm p-4 min-h-80 flex flex-col transition-colors duration-300 overflow-y-auto max-h-[calc(100vh-145px)] min-w-[400px]`}
             onDragOver={(e) => handleColumnDragOver(e, columnId)}
             onDrop={() => handleDrop(columnId, dropTarget.index)}
           >
+            <Badge className="text-md bg-background text-foreground border-1 border-border shadow-sm mb-4 sticky top-0 z-10">
+              {column.title}
+            </Badge>
             <div className="flex-1 space-y-3">
               {column.items.map((mergeRequest, index) => {
                 const isBeingDragged =

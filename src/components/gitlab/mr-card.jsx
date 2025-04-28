@@ -71,7 +71,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
   const MAX_NOTE_LENGTH = 38;
 
   return (
-    <div className="bg-background rounded-md p-4 border shadow hover:shadow-md transition select-none">
+    <div className="bg-background rounded-md p-4 border shadow-sm transition-shadow duration-300 select-none">
       <div className="flex justify-between gap-2 items-start mb-2">
         <h3 className="font-medium text-foreground">
           {mergeRequest.title_formatted}
@@ -136,8 +136,8 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
       </div>
 
       {mergeRequest.custom_fields.notes && (
-        <div className="text-xs bg-green-100 dark:bg-green-900/10 p-2 px-3 rounded-md border-green-700 dark:border-green-900 border mb-3 max-h-12 overflow-hidden">
-          <p className="text-green-700 dark:text-green-300">
+        <div className="text-sm bg-muted-foreground/20 p-2 px-3 rounded-md border-muted-foreground/50 mb-3 max-h-12 overflow-hidden">
+          <p className="text-foreground">
             {mergeRequest.custom_fields.notes.length > MAX_NOTE_LENGTH
               ? `${mergeRequest.custom_fields.notes.substring(
                   0,
@@ -156,7 +156,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
           className="gap-1 hover:cursor-pointer"
         >
           <MessageCircle size={14} />
-          {mergeRequest.hasNotes ? "Edit Note" : "Add Note"}
+          {mergeRequest.custom_fields.notes ? "Edit Note" : "Add Note"}
         </Button>
 
         <div className="flex items-center hover:cursor-pointer">
