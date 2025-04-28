@@ -9,6 +9,8 @@ export default function GitlabPage() {
     pending: { title: "Pending Review", items: [] },
     inProgress: { title: "In Progress", items: [] },
     completed: { title: "Completed", items: [] },
+    done: { title: "Done", items: [] },
+    closed: { title: "Closed", items: [] },
   });
 
   const handleColumnUpdate = (updatedColumns) => {
@@ -52,6 +54,8 @@ export default function GitlabPage() {
       pending: { title: "Pending Review", items: [] },
       inProgress: { title: "In Progress", items: [] },
       completed: { title: "Completed", items: [] },
+      done: { title: "Done", items: [] },
+      closed: { title: "Closed", items: [] },
     };
 
     mergeRequests.forEach((mr) => {
@@ -75,7 +79,7 @@ export default function GitlabPage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 w-full">
+    <div className="flex flex-col flex-1 overflow-x-auto">
       <PageHeader
         title="Gitlab Dashboard"
         description="Manage your merge requests and track development progress"

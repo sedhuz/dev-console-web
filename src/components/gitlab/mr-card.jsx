@@ -22,6 +22,8 @@ const tagColors = {
   "SECURITY REVIEW - NA":
     "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
   MASTER: "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
+  CONSOLIDATED:
+    "bg-green-100 text-green-800  dark:bg-green-900 dark:text-green-200",
   "READY TO MERGE":
     "bg-cyan-100 text-cyan-800  dark:bg-cyan-900 dark:text-cyan-200",
   "INVESTIGATION COMPLETED":
@@ -65,6 +67,8 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
   const handleOpenGitLab = () => {
     window.open(mergeRequest.web_url, "_blank");
   };
+
+  const MAX_NOTE_LENGTH = 38;
 
   return (
     <div className="bg-background rounded-md p-4 border shadow hover:shadow-md transition select-none">
@@ -132,8 +136,15 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
       </div>
 
       {mergeRequest.custom_fields.notes && (
-        <div className="text-xs bg-green-900/10 p-2 px-3 rounded-md border-green-900 border mb-3">
-          <p className="text-green-300">{mergeRequest.custom_fields.notes}</p>
+        <div className="text-xs bg-green-100 dark:bg-green-900/10 p-2 px-3 rounded-md border-green-700 dark:border-green-900 border mb-3 max-h-12 overflow-hidden">
+          <p className="text-green-700 dark:text-green-300">
+            {mergeRequest.custom_fields.notes.length > MAX_NOTE_LENGTH
+              ? `${mergeRequest.custom_fields.notes.substring(
+                  0,
+                  MAX_NOTE_LENGTH
+                )}...`
+              : mergeRequest.custom_fields.notes}
+          </p>
         </div>
       )}
 
@@ -142,7 +153,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
           size="sm"
           variant="outline"
           onClick={onAddNote}
-          className="gap-1"
+          className="gap-1 hover:cursor-pointer"
         >
           <MessageCircle size={14} />
           {mergeRequest.hasNotes ? "Edit Note" : "Add Note"}
@@ -154,7 +165,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
               variant="ghost"
               size="sm"
               onClick={handleCopyURL}
-              className="rounded-l-md rounded-r-none hover:bg-gray-200"
+              className="rounded-l-md rounded-r-none hover:bg-gray-200 hover:cursor-pointer"
             >
               🔗
             </Button>
@@ -163,7 +174,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
               variant="ghost"
               size="sm"
               onClick={handleOpenGitLab}
-              className="rounded-r-md rounded-l-none hover:bg-gray-200"
+              className="rounded-r-md rounded-l-none hover:bg-gray-200 hover:cursor-pointer"
             >
               🦊
             </Button>

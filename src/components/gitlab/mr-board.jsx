@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { MergeRequestCard } from "./mr-card";
 import { MergeRequestNoteDialog } from "./mr-note-dialog";
 import { GripVertical } from "lucide-react";
+import { API_CONFIG } from "@/config";
+import { toast } from "sonner";
 
 export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
   const [dragging, setDragging] = useState(null);
@@ -62,41 +64,129 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
     e.dataTransfer.setData("text/plain", itemId);
   };
 
-  // Handle dropping an item
-  const handleDrop = (targetColumnId, targetIndex) => {
+  // --- MODIFIED: Handle dropping an item ---
+  const handleDrop = async (targetColumnId, targetIndex) => {
     if (!dragging) return;
 
     const { columnId: sourceColumnId, itemId } = dragging;
+    const originalColumns = JSON.parse(JSON.stringify(columns)); // Deep copy for revert
 
-    const updatedColumns = { ...columns };
-    const sourceColumn = updatedColumns[sourceColumnId];
+    // Find the item being moved and its details
+    const movedItemInfo = findMergeRequestById(itemId); // Use existing helper
+    if (
+      !movedItemInfo ||
+      !movedItemInfo.item.project_id ||
+      !movedItemInfo.item.iid
+    ) {
+      console.error(
+        "Could not find dragged item details (ID, ProjectID, IID)."
+      );
+      resetDragState();
+      return;
+    }
+    const { item: movedItem, columnId: actualSourceColumnId } = movedItemInfo;
+    const projectId = movedItem.project_id;
+    const mrIid = movedItem.iid;
+
+    // Ensure sourceColumnId from state matches found item's column
+    if (actualSourceColumnId !== sourceColumnId) {
+      console.warn(
+        "Drag state source column mismatch. Using actual source column."
+      );
+      // sourceColumnId = actualSourceColumnId; // Optionally correct it, though logic below handles it
+    }
+
+    // --- Optimistic UI Update ---
+    const updatedColumns = JSON.parse(JSON.stringify(columns)); // Use a fresh deep copy
+    const sourceColumn = updatedColumns[actualSourceColumnId]; // Use actual source
     const destColumn = updatedColumns[targetColumnId];
 
     const sourceItems = Array.from(sourceColumn.items);
     const destItems = Array.from(destColumn.items);
 
     const movedItemIndex = sourceItems.findIndex((item) => item.id === itemId);
-    const [movedItem] = sourceItems.splice(movedItemIndex, 1);
+    if (movedItemIndex === -1) {
+      console.error(
+        "Could not find item index in source column for optimistic update."
+      );
+      resetDragState();
+      return; // Avoid proceeding if item not found
+    }
+    // Remove item from source (using the found item)
+    sourceItems.splice(movedItemIndex, 1);
 
-    // Update status based on the column
-    movedItem.status =
-      targetColumnId === "completed"
-        ? "merged"
-        : targetColumnId === "inProgress"
-        ? "in-progress"
-        : "pending";
-
-    if (sourceColumnId === targetColumnId) {
+    // Add item to destination at the correct index
+    if (actualSourceColumnId === targetColumnId) {
+      // Moving within the same column
       sourceItems.splice(targetIndex, 0, movedItem);
-      updatedColumns[sourceColumnId] = { ...sourceColumn, items: sourceItems };
+      updatedColumns[actualSourceColumnId] = {
+        ...sourceColumn,
+        items: sourceItems,
+      };
     } else {
+      // Moving to a different column
       destItems.splice(targetIndex, 0, movedItem);
-      updatedColumns[sourceColumnId] = { ...sourceColumn, items: sourceItems };
+      updatedColumns[actualSourceColumnId] = {
+        ...sourceColumn,
+        items: sourceItems,
+      };
       updatedColumns[targetColumnId] = { ...destColumn, items: destItems };
     }
 
-    onColumnUpdate(updatedColumns);
-    resetDragState();
+    // Apply optimistic update to the UI
+    // If parent manages state: onColumnUpdate(updatedColumns);
+
+    resetDragState(); // Reset drag state early for smoother UI
+
+    // --- Backend Update ---
+    try {
+      console.log(
+        `Updating backend: MR !${mrIid} (Project ${projectId}) moved to group ${targetColumnId}`
+      );
+      const response = await fetch(
+        `${API_CONFIG.baseUrl}/gitlab/merge-requests/${projectId}/${mrIid}/custom-fields`,
+        {
+          method: "POST",
+          // Assuming the backend expects the target column ID in a 'group' field
+          body: JSON.stringify({ group: targetColumnId }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(
+          `Failed to update MR group: ${response.status} ${errorData}`
+        );
+      }
+
+      // Backend update successful
+      toast.success(`Moved MR !${mrIid} to ${columns[targetColumnId].title}`);
+      // If parent manages state and you updated optimistically above,
+      // you might call onColumnUpdate again here to ensure parent has the final confirmed state
+      // or if the API returns the updated MR, merge that data.
+      // For now, we assume the optimistic update is sufficient if API succeeds.
+      if (onColumnUpdate) {
+        // Ensure the final state is propagated if parent manages it
+        onColumnUpdate(updatedColumns);
+      }
+    } catch (error) {
+      console.error("Error updating merge request group:", error);
+      toast.error(`Failed to move MR !${mrIid}. Reverting change.`);
+      // *** CHANGE HERE: Call the prop function to revert state in parent ***
+      if (onColumnUpdate) {
+        onColumnUpdate(originalColumns); // Notify parent to revert to original state
+      } else {
+        console.warn(
+          "onColumnUpdate prop is missing, cannot revert parent state."
+        );
+      }
+      // REMOVED: setColumns(originalColumns);
+    } finally {
+      resetDragState();
+    }
   };
 
   // Handle drag over for column
@@ -149,35 +239,65 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
 
   const handleAddNote = (projectId, mrIid) => {
     let existingNote = "";
-    Object.values(columns).forEach((column) => {
-      column.items.forEach((item) => {
-        if (
-          item.iid === mrIid &&
-          item.project_id === projectId &&
-          item.custom_fields.notes
-        ) {
-          existingNote = item.custom_fields.notes;
-        }
-      });
-    });
-    setNoteText(existingNote);
-    setNoteDialog({ open: true, projectId, mrIid });
+    // Find the specific item to get its current note
+    for (const colId in columns) {
+      const item = columns[colId].items.find(
+        (item) => item.project_id === projectId && item.iid === mrIid
+      );
+      // Ensure custom_fields exists before accessing notes
+      if (
+        item &&
+        item.custom_fields &&
+        typeof item.custom_fields.notes === "string"
+      ) {
+        existingNote = item.custom_fields.notes;
+        break; // Found the item, no need to continue loop
+      }
+    }
+    setNoteText(existingNote); // Set the text for the dialog
+    setNoteDialog({ open: true, projectId, mrIid }); // Open the dialog
   };
 
-  const handleSaveNote = () => {
-    const updatedColumns = { ...columns };
-    Object.keys(updatedColumns).forEach((colId) => {
-      updatedColumns[colId].items = updatedColumns[colId].items.map((item) => {
-        if (item.id === noteDialog.mrId) {
-          return { ...item, hasNotes: !!noteText.trim(), notes: noteText };
+  // --- CORRECTED: Callback function after note is saved via API in Dialog ---
+  const handleNoteSavedCallback = (
+    savedProjectId,
+    savedMrIid,
+    savedNoteText
+  ) => {
+    console.log(`Callback: Note saved for MR !${savedMrIid}. Updating state.`);
+    // Use the 'columns' prop directly for the base state
+    const currentColumns = JSON.parse(JSON.stringify(columns)); // Deep copy from prop
+    let itemFoundAndUpdated = false;
+
+    for (const colId in currentColumns) {
+      currentColumns[colId].items = currentColumns[colId].items.map((item) => {
+        if (item.project_id === savedProjectId && item.iid === savedMrIid) {
+          if (!item.custom_fields) {
+            item.custom_fields = {};
+          }
+          item.custom_fields.notes = savedNoteText;
+          item.hasNotes = !!savedNoteText?.trim();
+          itemFoundAndUpdated = true;
+          return item;
         }
         return item;
       });
-    });
+    }
 
-    onColumnUpdate(updatedColumns);
-    setNoteDialog({ open: false, projectId: null, mrIid: null });
-    setNoteText("");
+    if (itemFoundAndUpdated) {
+      // *** CHANGE HERE: Call the prop function instead of setColumns ***
+      if (onColumnUpdate) {
+        onColumnUpdate(currentColumns); // Notify parent with the updated state
+      } else {
+        console.warn(
+          "onColumnUpdate prop is missing, cannot update parent state."
+        );
+      }
+    } else {
+      console.warn("Item not found in state after note save callback.");
+    }
+
+    closeDialog();
   };
 
   const closeDialog = () => {
@@ -194,22 +314,17 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
   // Render the columns and items with placeholders
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="scrollbar-custom pb-2 flex overflow-x-auto gap-6">
+        <h2 className="font-semibold text-lg mb-4 text-foreground">
+          {column.title}
+        </h2>
         {Object.entries(columns).map(([columnId, column]) => (
           <div
             key={columnId}
-            className={`board-column bg-card rounded-lg border shadow-sm p-4 min-h-80 flex flex-col transition-colors duration-300
-              ${
-                dropTarget.columnId === columnId
-                  ? "bg-primary/5 border-primary"
-                  : "border-muted"
-              }`}
+            className={`board-column scrollbar-custom bg-card rounded-lg border shadow-sm p-4 min-h-80 flex flex-col transition-colors duration-300 overflow-y-auto max-h-[calc(100vh-145px)] min-w-[450px]`}
             onDragOver={(e) => handleColumnDragOver(e, columnId)}
             onDrop={() => handleDrop(columnId, dropTarget.index)}
           >
-            <h2 className="font-semibold text-lg mb-4 text-foreground">
-              {column.title}
-            </h2>
             <div className="flex-1 space-y-3">
               {column.items.map((mergeRequest, index) => {
                 const isBeingDragged =
@@ -287,9 +402,10 @@ export function MergeRequestBoard({ columns, onColumnUpdate, onCopySuccess }) {
       <MergeRequestNoteDialog
         open={noteDialog.open}
         onClose={closeDialog}
-        onSave={handleSaveNote}
-        noteText={noteText}
-        onNoteChange={(e) => setNoteText(e.target.value)}
+        // Pass the *callback* function to be executed AFTER successful API save in dialog
+        onSave={handleNoteSavedCallback}
+        noteText={noteText} // Pass current text state
+        onNoteChange={(e) => setNoteText(e.target.value)} // Update local text state directly
         projectId={noteDialog.projectId}
         mrIid={noteDialog.mrIid}
       />
