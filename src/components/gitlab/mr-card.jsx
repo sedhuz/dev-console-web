@@ -109,6 +109,60 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
             </Tooltip>
           </TooltipProvider>
         )}
+
+        {mergeRequest.is_bugfix && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge
+                  variant="outline"
+                  className="text-xs hover:cursor-pointer"
+                >
+                  🐞
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This merge request is a bugfix.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {mergeRequest.is_patch && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge
+                  variant="outline"
+                  className="text-xs hover:cursor-pointer"
+                >
+                  🩹
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This merge request is a patch.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        {mergeRequest.is_hotfix && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge
+                  variant="outline"
+                  className="text-xs hover:cursor-pointer"
+                >
+                  🔥
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This merge request is a hotfix.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       <div className="flex items-center text-xs text-muted-foreground mb-3">
@@ -125,10 +179,10 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
         {mergeRequest.labels.map((tag) => (
           <Badge
             key={tag}
-            className={
+            className={`py-0 px-1 rounded-sm ${
               tagColors[tag] ||
               "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-            }
+            }`}
           >
             {tag}
           </Badge>
@@ -136,7 +190,7 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
       </div>
 
       {mergeRequest.custom_fields.notes && (
-        <div className="text-sm bg-muted-foreground/20 p-2 px-3 rounded-md border-muted-foreground/50 mb-3 max-h-12 overflow-hidden">
+        <div className="text-sm bg-muted-foreground/20 p-1 px-3 rounded-md border-muted-foreground/50 mb-3 max-h-12 overflow-hidden">
           <p className="text-foreground">
             {mergeRequest.custom_fields.notes.length > MAX_NOTE_LENGTH
               ? `${mergeRequest.custom_fields.notes.substring(
@@ -150,31 +204,30 @@ export function MergeRequestCard({ mergeRequest, onAddNote, onCopy }) {
 
       <div className="flex justify-between items-center">
         <Button
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="ghost"
           onClick={onAddNote}
-          className="gap-1 hover:cursor-pointer"
+          className="gap-1 hover:cursor-pointer text-xs px-2 py-1 border text-muted-foreground"
         >
-          <MessageCircle size={14} />
-          {mergeRequest.custom_fields.notes ? "Edit Note" : "Add Note"}
+          {mergeRequest.custom_fields.notes ? "📑 Edit Note" : "📑 Add Note"}
         </Button>
 
         <div className="flex items-center hover:cursor-pointer">
           <div className="flex border border-faded rounded-md overflow-hidden">
             <Button
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={handleCopyURL}
-              className="rounded-l-md rounded-r-none hover:bg-gray-200 hover:cursor-pointer"
+              className="rounded-l-md rounded-r-none hover:bg-gray-200 hover:cursor-pointer px-2 py-0.5"
             >
               🔗
             </Button>
             <div className="border-l border-faded" />
             <Button
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={handleOpenGitLab}
-              className="rounded-r-md rounded-l-none hover:bg-gray-200 hover:cursor-pointer"
+              className="rounded-r-md rounded-l-none hover:bg-gray-200 hover:cursor-pointer px-2 py-0.5"
             >
               🦊
             </Button>

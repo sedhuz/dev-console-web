@@ -6,10 +6,14 @@ import { toast } from "sonner";
 
 export default function GitlabPage() {
   const [columns, setColumns] = useState({
-    pending: { title: "Pending Review", items: [] },
-    inProgress: { title: "In Progress", items: [] },
-    completed: { title: "Completed", items: [] },
-    done: { title: "Done", items: [] },
+    pending: { title: "Pending", items: [] },
+    good_to_go: { title: "Good To Go", items: [] },
+    work_on_hold: { title: "Work On Hold", items: [] },
+    // Merged
+    merged_new: { title: "New Merged", items: [] },
+    merged_old: { title: "Old Merged", items: [] },
+    // Closed
+    consolidated: { title: "Consolidated", items: [] },
     closed: { title: "Closed", items: [] },
   });
 
@@ -51,10 +55,14 @@ export default function GitlabPage() {
 
   const categorizeMergeRequests = (mergeRequests) => {
     const categorized = {
-      pending: { title: "Pending Review", items: [] },
-      inProgress: { title: "In Progress", items: [] },
-      completed: { title: "Completed", items: [] },
-      done: { title: "Done", items: [] },
+      pending: { title: "Pending", items: [] },
+      good_to_go: { title: "Good To Go", items: [] },
+      work_on_hold: { title: "Work On Hold", items: [] },
+      // Merged
+      merged_new: { title: "New Merged", items: [] },
+      merged_old: { title: "Old Merged", items: [] },
+      // Closed
+      consolidated: { title: "Consolidated", items: [] },
       closed: { title: "Closed", items: [] },
     };
 
